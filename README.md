@@ -253,3 +253,63 @@ curl http://localhost:8080/api/recon/123e4567-e89b-12d3-a456-426614174000/result
   }
 ]
 ```
+
+## 🛠 Technology Stack
+
+- Java 17+
+- Spring Boot
+- Spring Web
+- Spring Data JPA
+- H2 (local) / PostgreSQL (production)
+- Maven
+- Docker (optional)
+
+## 📁 Project Structure
+tubingen-reconciliation-engine/
+
+    ├── src/main/java/com/pswied/tubingen/
+        │   ├── controller/
+        │   ├── service/
+        │   ├── model/
+        │   ├── repository/
+        │   └── config/
+        ├── src/test/
+        ├── sample-data/
+        ├── docs/
+        ├── Dockerfile
+        ├── pom.xml
+        └── README.md
+
+## 🚀 Running Locally
+
+    ./mvnw spring-boot:run
+
+### Access API at
+
+    http://localhost:8080
+
+## 🔐 Security & Production Considerations
+
+- Designed to integrate with JWT / OAuth2
+- Input validation & file size limits
+- Audit logging for traceability
+- Stateless API suitable for horizontal scaling
+
+## 🧭 Roadmap
+
+- CSV upload support (Source A / Source B)
+- Async job execution
+- React dashboard (optional)
+- ISO8583 / ISO20022 mock adapters
+- Kubernetes deployment example
+- Metrics & monitoring (Actuator + Prometheus)
+
+## 👤 Author
+
+    Slamet Widodo (Wied)
+    Software Engineer / Engineering Manager
+    Banking · Middleware · Distributed Systems
+
+## 📄 License
+
+    This project is provided for educational and portfolio purposes.
