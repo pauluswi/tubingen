@@ -1,6 +1,7 @@
 # Tübingen – Reconciliation Engine
 
 [![Java CI with Maven](https://github.com/pauluswi/tubingen/actions/workflows/maven-build.yml/badge.svg)](https://github.com/pauluswi/tubingen/actions/workflows/maven-build.yml)
+[![codecov](https://codecov.io/gh/pauluswi/tubingen/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/pauluswi/tubingen)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Language](https://img.shields.io/badge/language-Java-blue.svg)
 ![Framework](https://img.shields.io/badge/Framework-Spring%20Boot-green.svg)
