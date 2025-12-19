@@ -1,5 +1,7 @@
 # Tübingen – Reconciliation Engine
 
+[![Java CI with Maven](https://github.com/pauluswi/tubingen/actions/workflows/maven-build.yml/badge.svg)](https://github.com/pauluswi/tubingen/actions/workflows/maven-build.yml)
+
 **Tübingen – Reconciliation Engine** is a backend-focused banking reconciliation service built with **Java Spring Boot**, designed to match and reconcile financial transactions between two independent sources (e.g. Core Banking vs Switch / Payment Provider).
 
 The system demonstrates **real-world banking reconciliation logic**, using an efficient **Two-Pointer algorithm** to achieve linear-time matching on large, ordered transaction datasets.
