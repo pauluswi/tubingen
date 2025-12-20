@@ -58,7 +58,7 @@ This project simulates that exact scenario in a **simplified but realistic way**
                             ▼
                 ┌────────────────────────┐
                 │   Spring Boot API      │
-                │  Bremen Recon Engine   │
+                │  Tubingen Recon Engine   │
                 └───────────┬────────────┘
                             │
     ┌───────────────────────┼───────────────────────┐
