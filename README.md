@@ -105,28 +105,29 @@ Stores the outcome of matching:
 
 ---
 
-## ⚙️ Reconciliation Algorithm (Two-Pointer)
+## ⚙️ Reconciliation Algorithm (Hybrid Approach)
 
-The engine uses a **Two-Pointer technique** on **sorted transaction lists**.
+The engine uses a **Hybrid Approach** combining **HashMap indexing** and **Two-Pointer technique**.
 
-### Why Two Pointers?
-- Transaction lists are naturally time-ordered
-- Avoids expensive nested loops
-- Scales linearly (O(n))
-- Industry-standard approach for settlement systems
+### 1. Duplicate Detection (Pre-processing)
+Before matching, each source list is scanned for duplicate Transaction IDs.
+- If a duplicate ID is found within the same source, it is immediately marked as `DUPLICATE`.
+- These records are removed from the matching pool to prevent false positives.
 
-### Matching Logic (Simplified)
-1. Sort Source A and Source B by timestamp
-2. Maintain two pointers (A and B)
-3. Compare records:
-    - Exact key match → MATCHED
-    - Timestamp & amount within tolerance → MATCHED
-    - Earlier record outside tolerance → MISSING
-    - Same timestamp but amount differs → AMOUNT_MISMATCH
-4. Advance pointers accordingly
-5. Remaining records are marked as missing
+### 2. Exact ID Matching (Pass 1)
+- **Source B** is indexed into a HashMap for O(1) lookup.
+- **Source A** is iterated to find exact ID matches in the map.
+- Matches are recorded as `MATCHED` or `AMOUNT_MISMATCH`.
+- Unmatched records are saved for the next pass.
 
-This mirrors how real reconciliation engines work in production banking systems.
+### 3. Fuzzy Time Matching (Pass 2 - Two Pointers)
+- Remaining records from both sources are sorted by timestamp.
+- A **Two-Pointer algorithm** traverses both lists to find matches based on:
+    - Time proximity (within configurable tolerance)
+    - Amount equality (within configurable tolerance)
+- Records that remain unmatched are marked as `MISSING_IN_SOURCE_A` or `MISSING_IN_SOURCE_B`.
+
+This approach ensures that **exact ID matches are prioritized** over fuzzy matches, which is critical for accuracy in banking systems.
 
 ---
 
@@ -228,7 +229,8 @@ curl http://localhost:8080/api/recon/123e4567-e89b-12d3-a456-426614174000/status
     "matched": 1,
     "missingInSourceB": 1,
     "missingInSourceA": 1,
-    "amountMismatch": 0
+    "amountMismatch": 0,
+    "duplicates": 0
   }
 }
 ```
