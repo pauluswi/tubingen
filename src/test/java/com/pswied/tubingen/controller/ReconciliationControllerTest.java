@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @WebMvcTest(ReconciliationController.class)
 @Import(ReconciliationService.class)
@@ -86,6 +87,19 @@ class ReconciliationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("[]"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testIngestInvalidSource() throws Exception {
+        List<TransactionRecord> listC = List.of(
+                new TransactionRecord("C", "TX1", new BigDecimal("100.00"), Instant.parse("2023-10-27T10:00:00Z"), "raw")
+        );
+
+        mockMvc.perform(post("/api/ingest")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(listC)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Invalid source. Must be A or B"));
     }
     
     @Test

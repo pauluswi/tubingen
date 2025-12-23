@@ -1,5 +1,6 @@
 package com.pswied.tubingen.model;
 
+import com.pswied.tubingen.controller.ReconciliationController;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -100,5 +101,32 @@ class ModelTest {
         assertEquals(summary, summary2);
         assertEquals(summary.hashCode(), summary2.hashCode());
         assertNotNull(summary.toString());
+    }
+
+    @Test
+    void testReconciliationRequest() {
+        ReconciliationController.ReconciliationRequest request = new ReconciliationController.ReconciliationRequest();
+        request.setJobName("Job");
+        request.setSourceA("A");
+        request.setSourceB("B");
+        request.setTimestampToleranceMillis(100);
+        request.setAmountTolerance(BigDecimal.ONE);
+
+        assertEquals("Job", request.getJobName());
+        assertEquals("A", request.getSourceA());
+        assertEquals("B", request.getSourceB());
+        assertEquals(100, request.getTimestampToleranceMillis());
+        assertEquals(BigDecimal.ONE, request.getAmountTolerance());
+
+        ReconciliationController.ReconciliationRequest request2 = new ReconciliationController.ReconciliationRequest();
+        request2.setJobName("Job");
+        request2.setSourceA("A");
+        request2.setSourceB("B");
+        request2.setTimestampToleranceMillis(100);
+        request2.setAmountTolerance(BigDecimal.ONE);
+
+        assertEquals(request, request2);
+        assertEquals(request.hashCode(), request2.hashCode());
+        assertNotNull(request.toString());
     }
 }
