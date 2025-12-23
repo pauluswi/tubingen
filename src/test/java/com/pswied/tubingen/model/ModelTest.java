@@ -88,13 +88,15 @@ class ModelTest {
         summary.setMissingInSourceA(2);
         summary.setMissingInSourceB(3);
         summary.setAmountMismatch(4);
+        summary.setDuplicates(5);
 
         assertEquals(1, summary.getMatched());
         assertEquals(2, summary.getMissingInSourceA());
         assertEquals(3, summary.getMissingInSourceB());
         assertEquals(4, summary.getAmountMismatch());
+        assertEquals(5, summary.getDuplicates());
 
-        ReconciliationJob.JobSummary summary2 = new ReconciliationJob.JobSummary(1, 2, 3, 4);
+        ReconciliationJob.JobSummary summary2 = new ReconciliationJob.JobSummary(1, 2, 3, 4, 5);
         assertEquals(summary, summary2);
         assertEquals(summary.hashCode(), summary2.hashCode());
         assertNotNull(summary.toString());

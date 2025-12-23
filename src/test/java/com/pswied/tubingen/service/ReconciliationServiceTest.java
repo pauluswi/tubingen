@@ -142,12 +142,15 @@ class ReconciliationServiceTest {
 
         assertEquals(2, results.size());
         
-        // One should be matched, one should be missing in A
+        // One should be matched, one should be DUPLICATE
         boolean matchedFound = results.stream().anyMatch(r -> r.getType() == ReconciliationMatch.MatchType.MATCHED);
-        boolean missingInAFound = results.stream().anyMatch(r -> r.getType() == ReconciliationMatch.MatchType.MISSING_IN_SOURCE_A);
+        boolean duplicateFound = results.stream().anyMatch(r -> r.getType() == ReconciliationMatch.MatchType.DUPLICATE);
         
         assertTrue(matchedFound);
-        assertTrue(missingInAFound);
+        assertTrue(duplicateFound);
+        
+        var summary = service.summarize(results);
+        assertEquals(1, summary.getDuplicates());
     }
 
     @Test

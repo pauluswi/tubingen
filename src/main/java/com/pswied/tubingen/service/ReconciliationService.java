@@ -14,6 +14,10 @@ public class ReconciliationService {
 
     public List<ReconciliationMatch> reconcile(List<TransactionRecord> listA, List<TransactionRecord> listB, long toleranceMillis, BigDecimal amountTolerance) {
         List<ReconciliationMatch> results = new ArrayList<>();
+
+        // --- PRE-PROCESS: Detect Duplicates ---
+        results.addAll(extractDuplicates(listA, "A"));
+        results.addAll(extractDuplicates(listB, "B"));
         
         // Lists for the second pass (Fuzzy Match)
         List<TransactionRecord> unmatchedA = new ArrayList<>();
@@ -103,6 +107,44 @@ public class ReconciliationService {
         return results;
     }
 
+    /**
+     * Identifies and removes duplicates from the provided list.
+     * Returns a list of ReconciliationMatch objects for the duplicates found.
+     */
+    private List<ReconciliationMatch> extractDuplicates(List<TransactionRecord> list, String sourceName) {
+        List<ReconciliationMatch> duplicates = new ArrayList<>();
+        Set<String> seenIds = new HashSet<>();
+        Iterator<TransactionRecord> iterator = list.iterator();
+
+        while (iterator.hasNext()) {
+            TransactionRecord record = iterator.next();
+            String id = record.getTransactionId();
+
+            // Skip null IDs for duplicate detection (handled in fuzzy match)
+            if (id == null) {
+                continue;
+            }
+
+            if (seenIds.contains(id)) {
+                // Duplicate found!
+                ReconciliationMatch match = new ReconciliationMatch();
+                match.setType(ReconciliationMatch.MatchType.DUPLICATE);
+                if ("A".equals(sourceName)) {
+                    match.setTransactionA(record);
+                } else {
+                    match.setTransactionB(record);
+                }
+                duplicates.add(match);
+                
+                // Remove from the list so it's not processed further
+                iterator.remove();
+            } else {
+                seenIds.add(id);
+            }
+        }
+        return duplicates;
+    }
+
     private boolean isAmountMatching(BigDecimal amount1, BigDecimal amount2, BigDecimal tolerance) {
         if (amount1 == null || amount2 == null) return false;
         return amount1.subtract(amount2).abs().compareTo(tolerance) <= 0;
@@ -123,6 +165,9 @@ public class ReconciliationService {
                     break;
                 case AMOUNT_MISMATCH:
                     summary.setAmountMismatch(summary.getAmountMismatch() + 1);
+                    break;
+                case DUPLICATE:
+                    summary.setDuplicates(summary.getDuplicates() + 1);
                     break;
             }
         }

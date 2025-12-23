@@ -30,5 +30,6 @@ public class ReconciliationJob {
         private int missingInSourceA;
         private int missingInSourceB;
         private int amountMismatch;
+        private int duplicates;
     }
 }
