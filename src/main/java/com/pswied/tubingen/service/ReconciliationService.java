@@ -7,9 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ReconciliationService {
@@ -17,30 +15,63 @@ public class ReconciliationService {
     public List<ReconciliationMatch> reconcile(List<TransactionRecord> listA, List<TransactionRecord> listB, long toleranceMillis, BigDecimal amountTolerance) {
         List<ReconciliationMatch> results = new ArrayList<>();
         
-        // Sort both lists by timestamp
-        listA.sort(Comparator.comparing(TransactionRecord::getTimestamp));
-        listB.sort(Comparator.comparing(TransactionRecord::getTimestamp));
+        // Lists for the second pass (Fuzzy Match)
+        List<TransactionRecord> unmatchedA = new ArrayList<>();
+        List<TransactionRecord> unmatchedB = new ArrayList<>();
+
+        // --- PASS 1: Exact ID Matching ---
+        // Index listB by Transaction ID for O(1) lookup
+        // Using a LinkedList to handle potential duplicate IDs in source B
+        Map<String, Queue<TransactionRecord>> mapB = new HashMap<>();
+        for (TransactionRecord recB : listB) {
+            if (recB.getTransactionId() != null) {
+                mapB.computeIfAbsent(recB.getTransactionId(), k -> new LinkedList<>()).add(recB);
+            } else {
+                unmatchedB.add(recB);
+            }
+        }
+
+        for (TransactionRecord recA : listA) {
+            String id = recA.getTransactionId();
+            if (id != null && mapB.containsKey(id) && !mapB.get(id).isEmpty()) {
+                // Exact ID match found
+                TransactionRecord recB = mapB.get(id).poll();
+                
+                if (recB != null) {
+                    if (isAmountMatching(recA.getAmount(), recB.getAmount(), amountTolerance)) {
+                        results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.MATCHED, recA, recB));
+                    } else {
+                        results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.AMOUNT_MISMATCH, recA, recB));
+                    }
+                }
+                
+                // Clean up map if empty
+                if (mapB.get(id).isEmpty()) {
+                    mapB.remove(id);
+                }
+            } else {
+                // No ID match, save for fuzzy matching
+                unmatchedA.add(recA);
+            }
+        }
+
+        // Collect remaining items from B for fuzzy matching
+        for (Queue<TransactionRecord> queue : mapB.values()) {
+            unmatchedB.addAll(queue);
+        }
+
+        // --- PASS 2: Fuzzy Time Matching (Two-Pointer) ---
+        // Sort by timestamp
+        unmatchedA.sort(Comparator.comparing(TransactionRecord::getTimestamp));
+        unmatchedB.sort(Comparator.comparing(TransactionRecord::getTimestamp));
 
         int i = 0;
         int j = 0;
 
-        while (i < listA.size() && j < listB.size()) {
-            TransactionRecord recA = listA.get(i);
-            TransactionRecord recB = listB.get(j);
+        while (i < unmatchedA.size() && j < unmatchedB.size()) {
+            TransactionRecord recA = unmatchedA.get(i);
+            TransactionRecord recB = unmatchedB.get(j);
 
-            // Check for exact ID match first (if applicable)
-            if (recA.getTransactionId().equals(recB.getTransactionId())) {
-                if (isAmountMatching(recA.getAmount(), recB.getAmount(), amountTolerance)) {
-                    results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.MATCHED, recA, recB));
-                } else {
-                    results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.AMOUNT_MISMATCH, recA, recB));
-                }
-                i++;
-                j++;
-                continue;
-            }
-
-            // Time-based comparison
             long timeDiff = Duration.between(recA.getTimestamp(), recB.getTimestamp()).toMillis();
 
             if (Math.abs(timeDiff) <= toleranceMillis && isAmountMatching(recA.getAmount(), recB.getAmount(), amountTolerance)) {
@@ -59,13 +90,13 @@ public class ReconciliationService {
         }
 
         // Process remaining records
-        while (i < listA.size()) {
-            results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.MISSING_IN_SOURCE_B, listA.get(i), null));
+        while (i < unmatchedA.size()) {
+            results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.MISSING_IN_SOURCE_B, unmatchedA.get(i), null));
             i++;
         }
 
-        while (j < listB.size()) {
-            results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.MISSING_IN_SOURCE_A, null, listB.get(j)));
+        while (j < unmatchedB.size()) {
+            results.add(new ReconciliationMatch(ReconciliationMatch.MatchType.MISSING_IN_SOURCE_A, null, unmatchedB.get(j)));
             j++;
         }
 
@@ -73,6 +104,7 @@ public class ReconciliationService {
     }
 
     private boolean isAmountMatching(BigDecimal amount1, BigDecimal amount2, BigDecimal tolerance) {
+        if (amount1 == null || amount2 == null) return false;
         return amount1.subtract(amount2).abs().compareTo(tolerance) <= 0;
     }
     
